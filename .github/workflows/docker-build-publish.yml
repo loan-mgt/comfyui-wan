@@ -26,6 +26,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Free up disk space
+        run: |
+          echo "=============================================================================="
+          echo "Freeing up disk space on CI system"
+          echo "=============================================================================="
+          
+          echo "Available space before cleanup:"
+          df -h
+          
+          echo "Removing large directories that are actually present on GitHub runners..."
+          
+          # This is the most effective cleanup - removes ~14GB
+          sudo rm -rf /opt/hostedtoolcache
+          
+          # Remove other large directories
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/lib/jvm
+          sudo rm -rf /usr/share/swift
+          
+          # Remove packages that are actually installed
+          sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-cli hhvm google-chrome-stable firefox powershell mono-devel || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          
+          echo "Available space after cleanup:"
+          df -h
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
