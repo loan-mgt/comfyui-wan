@@ -18,7 +18,9 @@ RUN git clone https://github.com/ltdrdata/ComfyUI-Manager $COMFYUI_DIR/custom_no
 # Install Python dependencies
 RUN pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128 && \
     pip install -r $COMFYUI_DIR/requirements.txt && \
-    pip install numpy==1.26.4
+    pip install numpy==1.26.4 && \
+    pip install -U "huggingface_hub[cli]" && \
+    pip install hf_transfer
 
 # Copy startup script and make it executable
 COPY --chmod=755 startup.sh /app/startup.sh
