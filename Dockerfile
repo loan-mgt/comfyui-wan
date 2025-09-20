@@ -24,5 +24,5 @@ RUN pip install --pre torch torchvision torchaudio --index-url https://download.
 COPY --chmod=755 startup.sh /app/startup.sh
 
 WORKDIR $COMFYUI_DIR
-EXPOSE 8080
+EXPOSE 8888
 ENTRYPOINT ["/app/startup.sh"]

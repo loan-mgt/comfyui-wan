@@ -28,7 +28,7 @@ docker pull ghcr.io/loan-mgt/comfyui-wan:latest
 docker run -d \
   --name comfyui-i2v \
   --gpus all \
-  -p 8188:8080 \
+  -p 8188:8888 \
   ghcr.io/loan-mgt/comfyui-wan:latest
 ```
 
@@ -46,7 +46,7 @@ docker build -t comfyui-i2v .
 docker run -d \
   --name comfyui-i2v \
   --gpus all \
-  -p 8188:8080 \
+  -p 8188:8888 \
   comfyui-i2v
 ```
 
@@ -66,7 +66,7 @@ services:
     image: ghcr.io/loan-mgt/comfyui-wan:latest
     container_name: comfyui-i2v
     ports:
-      - "8188:8080"
+      - "8188:8888"
     deploy:
       resources:
         reservations:
