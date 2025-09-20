@@ -58,4 +58,4 @@ echo "==========================================================================
 
 # Start ComfyUI
 cd $COMFYUI_DIR
-exec python main.py --listen 0.0.0.0 --port 8188
+exec python main.py --listen 0.0.0.0 --port 8080
