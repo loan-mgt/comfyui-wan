@@ -4,18 +4,6 @@ echo "==========================================================================
 echo "ComfyUI Wan 2.1/2.2 Startup - Checking Models"
 echo "============================================================================"
 
-# Handle HuggingFace authentication if token is provided
-if [ "$1" ]; then
-    echo "🔑 Authenticating with HuggingFace..."
-    echo "$1" | huggingface-cli login --token
-    if [ $? -eq 0 ]; then
-        echo "✓ Successfully authenticated with HuggingFace"
-    else
-        echo "⚠️ Warning: HuggingFace authentication failed, proceeding without auth"
-    fi
-    echo
-fi
-
 # Enable hf_transfer for faster downloads
 export HF_HUB_ENABLE_HF_TRANSFER=1
 
@@ -53,8 +41,8 @@ download_if_missing() {
         # Create directory if it doesn't exist
         mkdir -p "$(dirname "$full_path")"
         
-        # Use huggingface-cli with hf_transfer for faster downloads
-        if huggingface-cli download "$repo_id" "$filename" --local-dir "$COMFYUI_DIR/models" --local-dir-use-symlinks False; then
+        # Use hf download with hf_transfer for faster downloads
+        if hf download "$repo_id" "$filename" --local-dir "$COMFYUI_DIR/models"; then
             echo "✓ Successfully downloaded: $local_path"
         else
             echo "✗ Failed to download: $local_path"
