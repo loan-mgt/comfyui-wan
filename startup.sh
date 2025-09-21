@@ -43,11 +43,17 @@ download_if_missing() {
         
         # Use hf download with hf_transfer for faster downloads
         if hf download "$repo_id" "$filename" --local-dir "$COMFYUI_DIR/models"; then
-            echo "✓ Successfully downloaded: $local_path"
+            # Create a symbolic link from the expected location to the downloaded file
+            local downloaded_file="$COMFYUI_DIR/models/$filename"
+            if [ -f "$downloaded_file" ]; then
+                ln -s "$downloaded_file" "$full_path"
+                echo "✓ Successfully downloaded and linked: $local_path"
+            else
+                echo "✗ Downloaded file not found at: $downloaded_file"
+            fi
         else
             echo "✗ Failed to download: $local_path"
             echo "   You can manually download it later and restart the container"
-            echo "   Or provide a valid HuggingFace token if the model requires authentication"
         fi
     fi
     echo
