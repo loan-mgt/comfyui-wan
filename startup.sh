@@ -132,7 +132,7 @@ if [ ${#CUSTOM_LORAS[@]} -gt 0 ]; then
         # Parse the LoRA configuration 
         # The local_path should be the filename within the loras directory
         read -r repo_id filename local_path <<< "$lora_config"
-        local lora_model_config="$repo_id $filename loras/$local_path"
+        lora_model_config="$repo_id $filename loras/$local_path"
         
         # Use the reusable download function
         download_if_missing "custom_lora_$lora_counter" "$lora_model_config" "LoRA"
