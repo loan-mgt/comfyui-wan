@@ -14,6 +14,7 @@ declare -A MODELS=(
     ["text_encoder"]="Comfy-Org/Wan_2.1_ComfyUI_repackaged split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors"
     ["diffusion_high"]="Comfy-Org/Wan_2.2_ComfyUI_Repackaged split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp16.safetensors diffusion_models/wan2.2_i2v_high_noise_14B_fp16.safetensors"
     ["diffusion_low"]="Comfy-Org/Wan_2.2_ComfyUI_Repackaged split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp16.safetensors diffusion_models/wan2.2_i2v_low_noise_14B_fp16.safetensors"
+    ["upscale_nmkd"]="gemasai/4x_NMKD-Siax_200k 4x_NMKD-Siax_200k.pth upscale_models/4x_NMKD-Siax_200k.pth"
 )
 
 # Create model directories
@@ -21,6 +22,7 @@ mkdir -p $COMFYUI_DIR/models/vae
 mkdir -p $COMFYUI_DIR/models/clip_vision
 mkdir -p $COMFYUI_DIR/models/text_encoders
 mkdir -p $COMFYUI_DIR/models/diffusion_models
+mkdir -p $COMFYUI_DIR/models/upscale_models
 
 # Function to download a model if it doesn't exist
 download_if_missing() {
