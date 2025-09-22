@@ -1,32 +1,32 @@
 #!/bin/bash
 
-# ComfyUI Wan 2.1/2.2 Startup Script with Custom LoRA Support
+# ComfyUI Wan 2.1/2.2 Startup Script with Custom Model Support
 #
 # Usage Examples:
 # ./startup.sh
-# ./startup.sh --lora "stabilityai/stable-diffusion-xl-base-1.0 lora_weights.safetensors my_lora.safetensors"
-# ./startup.sh --lora "user/repo model.safetensors style_lora.safetensors" --lora "another/repo weights.bin character_lora.bin"
+# ./startup.sh --model "stabilityai/stable-diffusion-xl-base-1.0 lora_weights.safetensors loras/my_lora.safetensors"
+# ./startup.sh --model "user/repo model.safetensors loras/style_lora.safetensors" --model "another/repo weights.bin checkpoints/character_model.bin"
 #
-# LoRA Argument Format: "repo_id filename local_path"
+# Model Argument Format: "repo_id filename local_path"
 # - repo_id: Hugging Face repository (e.g., "stabilityai/stable-diffusion-xl-base-1.0")
 # - filename: File name in the repository (e.g., "lora_weights.safetensors")
-# - local_path: Local filename to save as (e.g., "my_custom_lora.safetensors")
+# - local_path: Full path within models directory (e.g., "loras/my_custom_lora.safetensors" or "checkpoints/model.safetensors")
 
 echo "============================================================================"
 echo "ComfyUI Wan 2.1/2.2 Startup - Checking Models"
 echo "============================================================================"
 
-# Parse command line arguments for custom LoRA models
-# Usage: --lora "repo_id filename local_path" --lora "repo_id filename local_path" ...
-CUSTOM_LORAS=()
+# Parse command line arguments for custom models (LoRAs, checkpoints, etc.)
+# Usage: --model "repo_id filename local_path" --model "repo_id filename local_path" ...
+CUSTOM_MODELS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --lora)
+        --model)
             if [[ -n "$2" ]]; then
-                CUSTOM_LORAS+=("$2")
+                CUSTOM_MODELS+=("$2")
                 shift 2
             else
-                echo "Error: --lora requires a value in format 'repo_id filename local_path'"
+                echo "Error: --model requires a value in format 'repo_id filename local_path'"
                 exit 1
             fi
             ;;
@@ -62,7 +62,6 @@ mkdir -p $COMFYUI_DIR/models/loras
 download_if_missing() {
     local model_key="$1"
     local model_config="$2"
-    local model_type="${3:-model}"  # Default to "model", can be "LoRA" for custom downloads
     
     # If model_config is not provided, get it from MODELS array
     if [ -z "$model_config" ]; then
@@ -74,19 +73,23 @@ download_if_missing() {
     local full_path="$COMFYUI_DIR/models/$local_path"
     
     if [ -f "$full_path" ]; then
-        echo "✓ $model_type already exists: $local_path"
+        echo "✓ Model already exists: $local_path"
     else
-        echo "⏬ Downloading missing $model_type: $local_path"
+        echo "⏬ Downloading missing model: $local_path"
         echo "   Repository: $repo_id"
         echo "   File: $filename"
         
         # Create directory if it doesn't exist
         mkdir -p "$(dirname "$full_path")"
         
-        # Determine download directory based on model type
+        # Determine download directory based on the local_path
         local download_dir="$COMFYUI_DIR/models"
-        if [[ "$model_type" == "LoRA" ]]; then
-            download_dir="$COMFYUI_DIR/models/loras"
+        local target_subdir=""
+        
+        # Extract the subdirectory from local_path (e.g., "loras" from "loras/file.safetensors")
+        if [[ "$local_path" == */* ]]; then
+            target_subdir="${local_path%/*}"
+            download_dir="$COMFYUI_DIR/models/$target_subdir"
         fi
         
         # Use hf download with hf_transfer for faster downloads
@@ -95,14 +98,14 @@ download_if_missing() {
             local downloaded_file="$download_dir/$filename"
             if [ -f "$downloaded_file" ] && [ "$downloaded_file" != "$full_path" ]; then
                 ln -s "$downloaded_file" "$full_path"
-                echo "✓ Successfully downloaded and linked $model_type: $local_path"
+                echo "✓ Successfully downloaded and linked: $local_path"
             elif [ -f "$full_path" ]; then
-                echo "✓ Successfully downloaded $model_type: $local_path"
+                echo "✓ Successfully downloaded: $local_path"
             else
-                echo "✗ Downloaded $model_type file not found at expected location"
+                echo "✗ Downloaded file not found at expected location"
             fi
         else
-            echo "✗ Failed to download $model_type: $local_path"
+            echo "✗ Failed to download: $local_path"
             echo "   You can manually download it later and restart the container"
         fi
     fi
@@ -119,25 +122,30 @@ for model_key in "${!MODELS[@]}"; do
     ((counter++))
 done
 
-# Download custom LoRA models if provided
-if [ ${#CUSTOM_LORAS[@]} -gt 0 ]; then
+# Download custom models if provided
+if [ ${#CUSTOM_MODELS[@]} -gt 0 ]; then
     echo "============================================================================"
-    echo "Processing Custom LoRA Models"
+    echo "Processing Custom Models"
     echo "============================================================================"
     
-    lora_counter=1
-    for lora_config in "${CUSTOM_LORAS[@]}"; do
-        echo "[$lora_counter/${#CUSTOM_LORAS[@]}] Processing custom LoRA"
+    model_counter=1
+    for model_config in "${CUSTOM_MODELS[@]}"; do
+        echo "[$model_counter/${#CUSTOM_MODELS[@]}] Processing custom model"
         
-        # Parse the LoRA configuration 
-        # The local_path should be the filename within the loras directory
-        read -r repo_id filename local_path <<< "$lora_config"
-        lora_model_config="$repo_id $filename loras/$local_path"
+        # Parse the model configuration 
+        # The local_path should include the full path within models directory
+        read -r repo_id filename local_path <<< "$model_config"
+        
+        # Debug: Print what we parsed
+        echo "   Parsed - Repo: '$repo_id', File: '$filename', Local: '$local_path'"
+        
+        # Use the local_path as provided (user specifies full path)
+        model_model_config="$repo_id $filename $local_path"
         
         # Use the reusable download function
-        download_if_missing "custom_lora_$lora_counter" "$lora_model_config" "LoRA"
+        download_if_missing "custom_model_$model_counter" "$model_model_config"
         
-        ((lora_counter++))
+        ((model_counter++))
     done
 fi
 
