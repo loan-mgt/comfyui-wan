@@ -4,13 +4,15 @@
 #
 # Usage Examples:
 # ./startup.sh
-# ./startup.sh --model "stabilityai/stable-diffusion-xl-base-1.0 lora_weights.safetensors loras/my_lora.safetensors"
-# ./startup.sh --model "user/repo model.safetensors loras/style_lora.safetensors" --model "another/repo weights.bin checkpoints/character_model.bin"
+# ./startup.sh --model "Comfy-Org/Wan_2.2_ComfyUI_Repackaged wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors"
+# ./startup.sh --model "user/repo custom_lora.safetensors" --model "another/repo another_lora.safetensors"
 #
-# Model Argument Format: "repo_id filename local_path"
+# Model Argument Format for --model: "repo_id filename"
 # - repo_id: Hugging Face repository (e.g., "stabilityai/stable-diffusion-xl-base-1.0")
 # - filename: File name in the repository (e.g., "lora_weights.safetensors")
-# - local_path: Full path within models directory (e.g., "loras/my_custom_lora.safetensors" or "checkpoints/model.safetensors")
+#
+# NOTE: When using --model the script will place the downloaded file under
+#       models/loras/{filename} (local_path is automatically determined).
 
 echo "============================================================================"
 echo "ComfyUI Wan 2.1/2.2 Startup - Checking Models"
@@ -23,10 +25,11 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --model)
             if [[ -n "$2" ]]; then
+                # Expecting: "repo_id filename"
                 CUSTOM_MODELS+=("$2")
                 shift 2
             else
-                echo "Error: --model requires a value in format 'repo_id filename local_path'"
+                echo "Error: --model requires a value in format 'repo_id filename'"
                 exit 1
             fi
             ;;
@@ -136,18 +139,19 @@ if [ ${#CUSTOM_MODELS[@]} -gt 0 ]; then
     for model_config in "${CUSTOM_MODELS[@]}"; do
         echo "[$model_counter/${#CUSTOM_MODELS[@]}] Processing custom model"
         
-        # Parse the model configuration 
-        # The local_path should include the full path within models directory
-        read -r repo_id filename local_path <<< "$model_config"
-        
-        # Debug: Print what we parsed
-        echo "   Parsed - Repo: '$repo_id', File: '$filename', Local: '$local_path'"
-        
-        # Use the local_path as provided (user specifies full path)
-        model_model_config="$repo_id $filename $local_path"
-        
-        # Use the reusable download function
-        download_if_missing "custom_model_$model_counter" "$model_model_config"
+    # Parse the model configuration
+    # Expecting: "repo_id filename" (local_path will be set to loras/{filename})
+    read -r repo_id filename <<< "$model_config"
+
+    # Determine local_path automatically for custom models
+    local_path="loras/$filename"
+
+    # Debug: Print what we parsed
+    echo "   Parsed - Repo: '$repo_id', File: '$filename', Local: '$local_path'"
+
+    # Build a full model config string and use the reusable download function
+    model_model_config="$repo_id $filename $local_path"
+    download_if_missing "custom_model_$model_counter" "$model_model_config"
         
         ((model_counter++))
     done

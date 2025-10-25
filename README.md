@@ -46,22 +46,23 @@ docker run -d --name comfyui-i2v --gpus all -p 8188:8888 \
 
 ### Custom LoRA Models
 
-You can add custom LoRA models from Hugging Face by passing them as arguments to the startup script:
+You can add custom LoRA models from Hugging Face by passing them as arguments to the startup script.
 
 ```bash
-# Single custom LoRA
+# Single custom LoRA (provide repo_id and filename)
 docker run -d --name comfyui-i2v --gpus all -p 8188:8888 \
   ghcr.io/loan-mgt/comfyui-wan:latest \
-  --lora "stabilityai/stable-diffusion-xl-base-1.0 lora_weights.safetensors my_style_lora.safetensors"
+  --model "stabilityai/stable-diffusion-xl-base-1.0 lora_weights.safetensors"
 
 # Multiple custom LoRAs
 docker run -d --name comfyui-i2v --gpus all -p 8188:8888 \
   ghcr.io/loan-mgt/comfyui-wan:latest \
-  --lora "user/repo style_lora.safetensors style.safetensors" \
-  --lora "another/repo character_lora.bin character.bin"
+  --model "user/repo style_lora.safetensors" \
+  --model "another/repo character_lora.bin"
 ```
 
-**LoRA Argument Format**: `"repo_id filename local_path"`
+Model Argument Format for `--model`: `"repo_id filename"`
 - `repo_id`: Hugging Face repository (e.g., "stabilityai/stable-diffusion-xl-base-1.0")
 - `filename`: File name in the repository (e.g., "lora_weights.safetensors")
-- `local_path`: Local filename to save as in `/app/ComfyUI/models/loras/` (e.g., "my_custom_lora.safetensors")
+
+Note: When using `--model` the script will save the downloaded file under `/app/ComfyUI/models/loras/{filename}` by default.
