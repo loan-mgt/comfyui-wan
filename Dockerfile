@@ -14,6 +14,7 @@ WORKDIR /app
 
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR
 RUN git clone https://github.com/ltdrdata/ComfyUI-Manager $COMFYUI_DIR/custom_nodes/comfyui-manager
+RUN git clone https://github.com/loan-mgt/hf-lora-loader.git $COMFYUI_DIR/custom_nodes/hf-lora-loader
 
 # Install Python dependencies
 RUN pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128 && \
