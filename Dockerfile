@@ -15,12 +15,15 @@ WORKDIR /app
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR
 RUN git clone https://github.com/ltdrdata/ComfyUI-Manager $COMFYUI_DIR/custom_nodes/comfyui-manager
 RUN git clone https://github.com/loan-mgt/hf-lora-loader.git $COMFYUI_DIR/custom_nodes/hf-lora-loader
+RUN git clone https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect
+RUN git clone https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler
 
 # Install Python dependencies
 RUN pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128 && \
     pip install -r $COMFYUI_DIR/requirements.txt && \
     pip install numpy==1.26.4 && \
-    pip install hf_transfer
+    pip install hf_transfer && \
+    pip install -r $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler/requirements.txt
 
 # Copy startup script and make it executable
 COPY --chmod=755 startup.sh /app/startup.sh
