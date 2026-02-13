@@ -55,7 +55,7 @@ declare -A MODELS=(
     ["qwen_image_vae"]="Comfy-Org/Qwen-Image_ComfyUI split_files/vae/qwen_image_vae.safetensors vae/qwen_image_vae.safetensors"
     ["text_encoder_2.5_vl_7b_fp8_scaled"]="Comfy-Org/Qwen-Image_ComfyUI split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors"
     ["diffusion_image_edit_2509_fp8_e4m3fn"]="Comfy-Org/Qwen-Image-Edit_ComfyUI split_files/diffusion_models/qwen_image_edit_2509_fp8_e4m3fn.safetensors diffusion_models/qwen_image_edit_2509_fp8_e4m3fn.safetensors"
-    ["qwen_image_edit_lightning_4steps_v1.0_bf16"]="lightx2v/Qwen-Image-Lightning split_files/diffusion_models/Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors diffusion_models/Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors"
+    ["qwen_image_edit_lightning_4steps_v1.0_bf16"]="lightx2v/Qwen-Image-Lightning Qwen-Image-Edit-2509/Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors loras/Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors"
 )
 
 # Create model directories
