@@ -164,4 +164,9 @@ echo "==========================================================================
 
 # Start ComfyUI
 cd $COMFYUI_DIR
-exec python main.py --listen 0.0.0.0 --port 8888
+PYTHON_EXEC="$COMFYUI_DIR/.venv/bin/python"
+if [ ! -x "$PYTHON_EXEC" ]; then
+    echo "⚠ Virtual environment python not found at $PYTHON_EXEC, falling back to system python"
+    PYTHON_EXEC="python"
+fi
+exec "$PYTHON_EXEC" main.py --listen 0.0.0.0 --port 8888
