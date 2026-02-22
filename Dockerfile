@@ -4,11 +4,15 @@ FROM runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV COMFYUI_DIR=/app/ComfyUI
+ENV UV_SYSTEM_PYTHON=1
 
 RUN apt-get update && apt-get install -y \
     git \
     wget \
     && rm -rf /var/lib/apt/lists/*
+
+RUN wget -qO- https://astral.sh/uv/install.sh | sh && \
+    ln -s /root/.local/bin/uv /usr/local/bin/uv
 
 WORKDIR /app
 
@@ -19,11 +23,11 @@ RUN git clone https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_
 RUN git clone https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler
 
 # Install Python dependencies
-RUN pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128 && \
-    pip install -r $COMFYUI_DIR/requirements.txt && \
-    pip install numpy==1.26.4 && \
-    pip install hf_transfer && \
-    pip install -r $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler/requirements.txt
+RUN uv pip install --system --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128 && \
+    uv pip install --system -r $COMFYUI_DIR/requirements.txt && \
+    uv pip install --system numpy==1.26.4 && \
+    uv pip install --system hf_transfer && \
+    uv pip install --system -r $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler/requirements.txt
 
 # Copy startup script and make it executable
 COPY --chmod=755 startup.sh /app/startup.sh

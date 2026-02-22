@@ -16,6 +16,7 @@ Access at: http://localhost:8188
 
 - **Fast Downloads**: Uses HuggingFace Hub with hf_transfer for blazingly fast model downloads
 - **Automatic Model Management**: Downloads missing models on first startup
+- **uv Package Management**: Uses ComfyUI's default `uv` package manager for Python dependencies
 - **Custom LoRA Support**: Add custom LoRA models from Hugging Face at startup
 - **GPU Optimized**: Ready for NVIDIA GPUs with CUDA support
 - **Public Models**: All required models are publicly available, no authentication needed
@@ -43,6 +44,7 @@ docker run -d --name comfyui-i2v --gpus all -p 8188:8888 \
 
 - `HF_HUB_ENABLE_HF_TRANSFER=1`: Automatically enabled for faster downloads
 - `COMFYUI_DIR=/app/ComfyUI`: ComfyUI installation directory
+- `UV_SYSTEM_PYTHON=1`: Allows `uv` to manage dependencies in the system Python environment
 
 ### Custom LoRA Models
 
