@@ -40,8 +40,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Enable hf_transfer for faster downloads
-export HF_HUB_ENABLE_HF_TRANSFER=1
+# huggingface_hub uses hf_xet automatically when available
+
+# Resolve Hugging Face download command from virtualenv only
+HF_CMD=""
+HF_PYTHON="$COMFYUI_DIR/.venv/bin/python"
+if [ -x "$COMFYUI_DIR/.venv/bin/hf" ]; then
+    HF_CMD="$COMFYUI_DIR/.venv/bin/hf"
+elif [ -x "$HF_PYTHON" ]; then
+    HF_CMD="$HF_PYTHON"
+fi
 
 # Model configurations: [repo_id, filename, local_path]
 declare -A MODELS=(
@@ -100,8 +108,22 @@ download_if_missing() {
             download_dir="$COMFYUI_DIR/models/$target_subdir"
         fi
         
-        # Use hf download with hf_transfer for faster downloads
-        if hf download "$repo_id" "$filename" --local-dir "$download_dir"; then
+        if [ -z "$HF_CMD" ]; then
+            echo "✗ Hugging Face download command not found. Install huggingface_hub[cli] and rebuild the image."
+            echo "   You can manually download it later and restart the container"
+        # Use huggingface_hub download command from venv
+        elif [ "$HF_CMD" = "$HF_PYTHON" ] && "$HF_CMD" -m huggingface_hub download "$repo_id" "$filename" --local-dir "$download_dir"; then
+            # Create a symbolic link from the expected location to the downloaded file
+            local downloaded_file="$download_dir/$filename"
+            if [ -f "$downloaded_file" ] && [ "$downloaded_file" != "$full_path" ]; then
+                ln -s "$downloaded_file" "$full_path"
+                echo "✓ Successfully downloaded and linked: $local_path"
+            elif [ -f "$full_path" ]; then
+                echo "✓ Successfully downloaded: $local_path"
+            else
+                echo "✗ Downloaded file not found at expected location"
+            fi
+        elif "$HF_CMD" download "$repo_id" "$filename" --local-dir "$download_dir"; then
             # Create a symbolic link from the expected location to the downloaded file
             local downloaded_file="$download_dir/$filename"
             if [ -f "$downloaded_file" ] && [ "$downloaded_file" != "$full_path" ]; then

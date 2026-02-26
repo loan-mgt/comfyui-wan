@@ -14,7 +14,7 @@ Access at: http://localhost:8188
 
 ## Features
 
-- **Fast Downloads**: Uses HuggingFace Hub with hf_transfer for blazingly fast model downloads
+- **Fast Downloads**: Uses Hugging Face Hub with Xet-backed transfers (`hf_xet`) via `huggingface_hub`
 - **Automatic Model Management**: Downloads missing models on first startup
 - **uv Package Management**: Uses ComfyUI's default `uv` package manager with a project virtual environment
 - **Custom LoRA Support**: Add custom LoRA models from Hugging Face at startup
@@ -42,8 +42,9 @@ docker run -d --name comfyui-i2v --gpus all -p 8188:8888 \
 
 ### Environment Variables
 
-- `HF_HUB_ENABLE_HF_TRANSFER=1`: Automatically enabled for faster downloads
 - `COMFYUI_DIR=/app/ComfyUI`: ComfyUI installation directory
+
+Note: `hf_transfer` is deprecated upstream. This image uses current `huggingface_hub` behavior (including `hf_xet` when available).
 
 ### Python Environment
 

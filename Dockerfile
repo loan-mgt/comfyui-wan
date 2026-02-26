@@ -27,7 +27,7 @@ RUN uv venv $COMFYUI_DIR/.venv && \
     uv pip install --python $COMFYUI_DIR/.venv/bin/python --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128 && \
     uv pip install --python $COMFYUI_DIR/.venv/bin/python -r $COMFYUI_DIR/requirements.txt && \
     uv pip install --python $COMFYUI_DIR/.venv/bin/python numpy==1.26.4 && \
-    uv pip install --python $COMFYUI_DIR/.venv/bin/python hf_transfer && \
+    uv pip install --python $COMFYUI_DIR/.venv/bin/python -U "huggingface_hub[cli]" && \
     uv pip install --python $COMFYUI_DIR/.venv/bin/python -r $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler/requirements.txt
 
 # Copy startup script and make it executable
