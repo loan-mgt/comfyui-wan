@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # ComfyUI Wan 2.1/2.2 Startup Script with Custom Model Support
 #
@@ -8,50 +9,29 @@
 # ./startup.sh --model "user/repo custom_lora.safetensors" --model "another/repo another_lora.safetensors"
 #
 # Model Argument Format for --model: "repo_id filename"
-# - repo_id: Hugging Face repository (e.g., "stabilityai/stable-diffusion-xl-base-1.0")
-# - filename: File name in the repository (e.g., "lora_weights.safetensors")
-#
-# NOTE: When using --model the script will place the downloaded file under
-#       models/loras/{filename} (local_path is automatically determined).
+# NOTE: custom models are placed under models/loras/{filename}
+
+HF="$COMFYUI_DIR/.venv/bin/hf"
+export HF_XET_HIGH_PERFORMANCE=1
 
 echo "============================================================================"
 echo "ComfyUI Wan 2.1/2.2 Startup - Checking Models"
 echo "============================================================================"
 
-# Parse command line arguments for custom models (LoRAs, checkpoints, etc.)
-# Usage: --model "repo_id filename local_path" --model "repo_id filename local_path" ...
+# Parse --model "repo_id filename" arguments
 CUSTOM_MODELS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
         --model)
-            if [[ -n "$2" ]]; then
-                # Expecting: "repo_id filename"
-                CUSTOM_MODELS+=("$2")
-                shift 2
-            else
-                echo "Error: --model requires a value in format 'repo_id filename'"
-                exit 1
-            fi
+            [[ -n "$2" ]] || { echo "Error: --model requires a value in format 'repo_id filename'"; exit 1; }
+            CUSTOM_MODELS+=("$2")
+            shift 2
             ;;
-        *)
-            # Unknown option, skip it
-            shift
-            ;;
+        *) shift ;;
     esac
 done
 
-# huggingface_hub uses hf_xet automatically when available
-
-# Resolve Hugging Face download command from virtualenv only
-HF_CMD=""
-HF_PYTHON="$COMFYUI_DIR/.venv/bin/python"
-if [ -x "$COMFYUI_DIR/.venv/bin/hf" ]; then
-    HF_CMD="$COMFYUI_DIR/.venv/bin/hf"
-elif [ -x "$HF_PYTHON" ]; then
-    HF_CMD="$HF_PYTHON"
-fi
-
-# Model configurations: [repo_id, filename, local_path]
+# Model configurations: "repo_id hf_filename local_path_under_models/"
 declare -A MODELS=(
     ["vae"]="Comfy-Org/Wan_2.1_ComfyUI_repackaged split_files/vae/wan_2.1_vae.safetensors vae/wan_2.1_vae.safetensors"
     ["clip_vision"]="Comfy-Org/Wan_2.1_ComfyUI_repackaged split_files/clip_vision/clip_vision_h.safetensors clip_vision/clip_vision_h.safetensors"
@@ -66,117 +46,57 @@ declare -A MODELS=(
     ["qwen_image_edit_lightning_4steps_v1.0_bf16"]="lightx2v/Qwen-Image-Lightning Qwen-Image-Edit-2509/Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors loras/Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors"
 )
 
-# Create model directories
-mkdir -p $COMFYUI_DIR/models/vae
-mkdir -p $COMFYUI_DIR/models/clip_vision
-mkdir -p $COMFYUI_DIR/models/text_encoders
-mkdir -p $COMFYUI_DIR/models/diffusion_models
-mkdir -p $COMFYUI_DIR/models/upscale_models
-mkdir -p $COMFYUI_DIR/models/loras
+mkdir -p "$COMFYUI_DIR/models/"{vae,clip_vision,text_encoders,diffusion_models,upscale_models,loras}
 
-# Function to download a model if it doesn't exist
+# Download a model and symlink it to its flat local_path so ComfyUI sees both paths.
+# hf_xet may crash during Python teardown (Fatal Python error: _PyImport_Init) even
+# after a successful download, so we ignore the exit code and check file existence directly.
 download_if_missing() {
-    local model_key="$1"
-    local model_config="$2"
-    
-    # If model_config is not provided, get it from MODELS array
-    if [ -z "$model_config" ]; then
-        model_config="${MODELS[$model_key]}"
-    fi
-    
-    # Parse the model configuration
-    read -r repo_id filename local_path <<< "$model_config"
+    local repo_id="$1" filename="$2" local_path="$3"
     local full_path="$COMFYUI_DIR/models/$local_path"
-    
-    if [ -f "$full_path" ]; then
-        echo "✓ Model already exists: $local_path"
+    local download_dir="$COMFYUI_DIR/models/${local_path%/*}"
+
+    if [[ -f "$full_path" ]]; then
+        echo "✓ Already exists: $local_path"
+        return
+    fi
+
+    echo "⏬ Downloading: $local_path  ($repo_id / $filename)"
+    mkdir -p "$download_dir"
+
+    "$HF" download "$repo_id" "$filename" --local-dir "$download_dir" || true
+
+    local downloaded_file="$download_dir/$filename"
+    if [[ -f "$downloaded_file" && "$downloaded_file" != "$full_path" ]]; then
+        ln -sf "$downloaded_file" "$full_path"
+        echo "✓ Downloaded and linked: $local_path"
+    elif [[ -f "$full_path" ]]; then
+        echo "✓ Downloaded: $local_path"
     else
-        echo "⏬ Downloading missing model: $local_path"
-        echo "   Repository: $repo_id"
-        echo "   File: $filename"
-        
-        # Create directory if it doesn't exist
-        mkdir -p "$(dirname "$full_path")"
-        
-        # Determine download directory based on the local_path
-        local download_dir="$COMFYUI_DIR/models"
-        local target_subdir=""
-        
-        # Extract the subdirectory from local_path (e.g., "loras" from "loras/file.safetensors")
-        if [[ "$local_path" == */* ]]; then
-            target_subdir="${local_path%/*}"
-            download_dir="$COMFYUI_DIR/models/$target_subdir"
-        fi
-        
-        if [ -z "$HF_CMD" ]; then
-            echo "✗ Hugging Face download command not found. Install huggingface_hub[cli] and rebuild the image."
-            echo "   You can manually download it later and restart the container"
-        # Use huggingface_hub download command from venv
-        elif [ "$HF_CMD" = "$HF_PYTHON" ] && "$HF_CMD" -m huggingface_hub download "$repo_id" "$filename" --local-dir "$download_dir"; then
-            # Create a symbolic link from the expected location to the downloaded file
-            local downloaded_file="$download_dir/$filename"
-            if [ -f "$downloaded_file" ] && [ "$downloaded_file" != "$full_path" ]; then
-                ln -s "$downloaded_file" "$full_path"
-                echo "✓ Successfully downloaded and linked: $local_path"
-            elif [ -f "$full_path" ]; then
-                echo "✓ Successfully downloaded: $local_path"
-            else
-                echo "✗ Downloaded file not found at expected location"
-            fi
-        elif "$HF_CMD" download "$repo_id" "$filename" --local-dir "$download_dir"; then
-            # Create a symbolic link from the expected location to the downloaded file
-            local downloaded_file="$download_dir/$filename"
-            if [ -f "$downloaded_file" ] && [ "$downloaded_file" != "$full_path" ]; then
-                ln -s "$downloaded_file" "$full_path"
-                echo "✓ Successfully downloaded and linked: $local_path"
-            elif [ -f "$full_path" ]; then
-                echo "✓ Successfully downloaded: $local_path"
-            else
-                echo "✗ Downloaded file not found at expected location"
-            fi
-        else
-            echo "✗ Failed to download: $local_path"
-            echo "   You can manually download it later and restart the container"
-        fi
+        echo "✗ Failed to download: $local_path"
     fi
     echo
 }
 
-# Check and download each model
+# Built-in models
 counter=1
 total=${#MODELS[@]}
-
-for model_key in "${!MODELS[@]}"; do
-    echo "[$counter/$total] Checking: $model_key"
-    download_if_missing "$model_key"
-    ((counter++))
+for key in "${!MODELS[@]}"; do
+    echo "[$((counter++))/$total] $key"
+    read -r repo_id filename local_path <<< "${MODELS[$key]}"
+    download_if_missing "$repo_id" "$filename" "$local_path"
 done
 
-# Download custom models if provided
-if [ ${#CUSTOM_MODELS[@]} -gt 0 ]; then
+# Custom models passed via --model
+if [[ ${#CUSTOM_MODELS[@]} -gt 0 ]]; then
     echo "============================================================================"
     echo "Processing Custom Models"
     echo "============================================================================"
-    
-    model_counter=1
+    counter=1
     for model_config in "${CUSTOM_MODELS[@]}"; do
-        echo "[$model_counter/${#CUSTOM_MODELS[@]}] Processing custom model"
-        
-    # Parse the model configuration
-    # Expecting: "repo_id filename" (local_path will be set to loras/{filename})
-    read -r repo_id filename <<< "$model_config"
-
-    # Determine local_path automatically for custom models
-    local_path="loras/$filename"
-
-    # Debug: Print what we parsed
-    echo "   Parsed - Repo: '$repo_id', File: '$filename', Local: '$local_path'"
-
-    # Build a full model config string and use the reusable download function
-    model_model_config="$repo_id $filename $local_path"
-    download_if_missing "custom_model_$model_counter" "$model_model_config"
-        
-        ((model_counter++))
+        read -r repo_id filename <<< "$model_config"
+        echo "[$((counter++))/${#CUSTOM_MODELS[@]}] $repo_id / $filename"
+        download_if_missing "$repo_id" "$filename" "loras/$filename"
     done
 fi
 
@@ -184,11 +104,5 @@ echo "==========================================================================
 echo "Model check complete! Starting ComfyUI..."
 echo "============================================================================"
 
-# Start ComfyUI
-cd $COMFYUI_DIR
-PYTHON_EXEC="$COMFYUI_DIR/.venv/bin/python"
-if [ ! -x "$PYTHON_EXEC" ]; then
-    echo "⚠ Virtual environment python not found at $PYTHON_EXEC, falling back to system python"
-    PYTHON_EXEC="python"
-fi
-exec "$PYTHON_EXEC" main.py --listen 0.0.0.0 --port 8888
+cd "$COMFYUI_DIR"
+exec "$COMFYUI_DIR/.venv/bin/python" main.py --listen 0.0.0.0 --port 8888
