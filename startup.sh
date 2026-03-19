@@ -5,11 +5,14 @@ set -euo pipefail
 #
 # Usage Examples:
 # ./startup.sh
+# ./startup.sh --hf-token "hf_xxx"
 # ./startup.sh --model "Comfy-Org/Wan_2.2_ComfyUI_Repackaged wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors"
+# ./startup.sh --hf-token "hf_xxx" --model "user/repo custom_lora.safetensors"
 # ./startup.sh --model "user/repo custom_lora.safetensors" --model "another/repo another_lora.safetensors"
 #
 # Model Argument Format for --model: "repo_id filename"
 # NOTE: custom models are placed under models/loras/{filename}
+# Auth Argument Format: --hf-token "hf_xxx"
 
 HF="hf"
 
@@ -23,6 +26,7 @@ echo "==========================================================================
 
 # Parse --model "repo_id filename" arguments
 CUSTOM_MODELS=()
+HF_TOKEN_ARG=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --model)
@@ -30,9 +34,24 @@ while [[ $# -gt 0 ]]; do
             CUSTOM_MODELS+=("$2")
             shift 2
             ;;
+        --hf-token)
+            [[ $# -ge 2 && -n "$2" ]] || { echo "Error: --hf-token requires a token value"; exit 1; }
+            HF_TOKEN_ARG="$2"
+            shift 2
+            ;;
+        --hf-token=*)
+            HF_TOKEN_ARG="${1#*=}"
+            [[ -n "$HF_TOKEN_ARG" ]] || { echo "Error: --hf-token requires a token value"; exit 1; }
+            shift
+            ;;
         *) shift ;;
     esac
 done
+
+if [[ -n "$HF_TOKEN_ARG" ]]; then
+    export HF_TOKEN="$HF_TOKEN_ARG"
+    export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN_ARG"
+fi
 
 # Model configurations: "repo_id hf_filename local_path_under_models/"
 declare -A MODELS=(
