@@ -11,7 +11,10 @@ set -euo pipefail
 # Model Argument Format for --model: "repo_id filename"
 # NOTE: custom models are placed under models/loras/{filename}
 
-HF="$COMFYUI_DIR/.venv/bin/hf"
+HF="hf"
+
+PYTHON_BIN="python3"
+
 export HF_XET_HIGH_PERFORMANCE=1
 
 echo "============================================================================"
@@ -105,4 +108,4 @@ echo "Model check complete! Starting ComfyUI..."
 echo "============================================================================"
 
 cd "$COMFYUI_DIR"
-exec "$COMFYUI_DIR/.venv/bin/python" main.py --listen 0.0.0.0 --port 8888
+exec "$PYTHON_BIN" main.py --listen 0.0.0.0 --port 8888

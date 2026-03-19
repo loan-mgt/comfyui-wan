@@ -2,6 +2,8 @@ FROM runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV COMFYUI_DIR=/app/ComfyUI
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+ENV PIP_ROOT_USER_ACTION=ignore
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git wget \
@@ -18,7 +20,7 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR && \
     git clone https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect && \
     git clone https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler
 
-RUN uv pip install --system \
+RUN uv pip install --system --break-system-packages \
         -r $COMFYUI_DIR/requirements.txt \
         -r $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler/requirements.txt \
         "numpy==1.26.4" \
