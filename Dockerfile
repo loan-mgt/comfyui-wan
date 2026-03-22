@@ -4,6 +4,7 @@ ENV PYTHONUNBUFFERED=1
 ENV COMFYUI_DIR=/app/ComfyUI
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PIP_ROOT_USER_ACTION=ignore
+ENV HF_HOME=/app/ComfyUI/models/.cache/huggingface/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git wget \
