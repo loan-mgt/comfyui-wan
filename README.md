@@ -23,7 +23,6 @@ Access at: http://localhost:8188
   - [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager)
   - [hf-lora-loader](https://github.com/loan-mgt/hf-lora-loader)
   - [ComfyUI-RunpodDirect](https://github.com/MadiatorLabs/ComfyUI-RunpodDirect)
-  - [ComfyUI-SeedVR2_VideoUpscaler](https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler)
 
 ## Requirements
 
