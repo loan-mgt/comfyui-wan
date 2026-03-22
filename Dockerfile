@@ -22,7 +22,6 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR && \
 
 RUN uv pip install --system --break-system-packages \
         -r $COMFYUI_DIR/requirements.txt \
-        -r $COMFYUI_DIR/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler/requirements.txt \
         "numpy==1.26.4" \
         "huggingface_hub[cli]"
 
