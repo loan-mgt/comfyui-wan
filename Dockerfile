@@ -18,7 +18,7 @@ WORKDIR /app
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR && \
     git clone https://github.com/ltdrdata/ComfyUI-Manager $COMFYUI_DIR/custom_nodes/comfyui-manager && \
     git clone https://github.com/loan-mgt/hf-lora-loader.git $COMFYUI_DIR/custom_nodes/hf-lora-loader && \
-    git clone https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect && \
+    git clone https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect
 
 RUN uv pip install --system --break-system-packages \
         -r $COMFYUI_DIR/requirements.txt \
