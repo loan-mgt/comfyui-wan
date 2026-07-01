@@ -28,4 +28,6 @@ RUN uv pip install --system --break-system-packages \
 COPY --chmod=755 startup.sh /app/startup.sh
 WORKDIR $COMFYUI_DIR
 EXPOSE 8888
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+  CMD wget -q --spider http://localhost:8888/system_stats || exit 1
 ENTRYPOINT ["/app/startup.sh"]
