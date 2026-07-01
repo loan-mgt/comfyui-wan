@@ -15,14 +15,14 @@ RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_D
     git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager $COMFYUI_DIR/custom_nodes/comfyui-manager && \
     git clone --depth 1 https://github.com/loan-mgt/hf-lora-loader.git $COMFYUI_DIR/custom_nodes/hf-lora-loader && \
     git clone --depth 1 https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect
-RUN uv pip install --system \
+RUN uv pip install --system --break-system-packages \
         -r $COMFYUI_DIR/requirements.txt \
         "numpy==1.26.4" \
         "huggingface_hub[cli]" && \
     for d in $COMFYUI_DIR/custom_nodes/*/; do \
         if [ -f "$d/requirements.txt" ]; then \
             echo "Installing deps for $d" && \
-            uv pip install --system -r "$d/requirements.txt"; \
+            uv pip install --system --break-system-packages -r "$d/requirements.txt"; \
         fi \
     done
 COPY --chmod=755 startup.sh /app/startup.sh
