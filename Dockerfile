@@ -5,26 +5,26 @@ ENV COMFYUI_DIR=/app/ComfyUI
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV HF_HOME=/app/ComfyUI/models/.cache/huggingface/
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git wget \
     && rm -rf /var/lib/apt/lists/*
-
 RUN wget -qO- https://astral.sh/uv/install.sh | sh && \
     ln -s /root/.local/bin/uv /usr/local/bin/uv
-
 WORKDIR /app
-
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR && \
-    git clone https://github.com/ltdrdata/ComfyUI-Manager $COMFYUI_DIR/custom_nodes/comfyui-manager && \
-    git clone https://github.com/loan-mgt/hf-lora-loader.git $COMFYUI_DIR/custom_nodes/hf-lora-loader && \
-    git clone https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect
-
-RUN uv pip install --system --break-system-packages \
+RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR && \
+    git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager $COMFYUI_DIR/custom_nodes/comfyui-manager && \
+    git clone --depth 1 https://github.com/loan-mgt/hf-lora-loader.git $COMFYUI_DIR/custom_nodes/hf-lora-loader && \
+    git clone --depth 1 https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect
+RUN uv pip install --system \
         -r $COMFYUI_DIR/requirements.txt \
         "numpy==1.26.4" \
-        "huggingface_hub[cli]"
-
+        "huggingface_hub[cli]" && \
+    for d in $COMFYUI_DIR/custom_nodes/*/; do \
+        if [ -f "$d/requirements.txt" ]; then \
+            echo "Installing deps for $d" && \
+            uv pip install --system -r "$d/requirements.txt"; \
+        fi \
+    done
 COPY --chmod=755 startup.sh /app/startup.sh
 WORKDIR $COMFYUI_DIR
 EXPOSE 8888
