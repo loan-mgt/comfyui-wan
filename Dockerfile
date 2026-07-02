@@ -20,9 +20,15 @@ RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_D
     git clone --depth 1 https://github.com/loan-mgt/hf-lora-loader.git $COMFYUI_DIR/custom_nodes/hf-lora-loader && \
     git clone --depth 1 https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect
 
+# Lock torch/torchvision/torchaudio to whatever the base image already ships,
+# so no package (top-level or transitive) can silently reinstall a mismatched build.
+RUN uv pip freeze | grep -E '^(torch|torchvision|torchaudio)==' > /tmp/torch-constraints.txt && \
+    cat /tmp/torch-constraints.txt
+
 RUN grep -vE '^(torch|torchvision|torchaudio)([=<> ]|$)' $COMFYUI_DIR/requirements.txt > $COMFYUI_DIR/requirements.filtered.txt
 
 RUN uv pip install --system --break-system-packages \
+    --constraint /tmp/torch-constraints.txt \
     -r $COMFYUI_DIR/requirements.filtered.txt \
     "numpy==1.26.4" \
     "huggingface_hub[cli]" && \
@@ -30,7 +36,7 @@ RUN uv pip install --system --break-system-packages \
     if [ -f "$d/requirements.txt" ]; then \
     echo "Installing deps for $d" && \
     grep -vE '^(torch|torchvision|torchaudio)([=<> ]|$)' "$d/requirements.txt" > "$d/requirements.filtered.txt" && \
-    uv pip install --system --break-system-packages -r "$d/requirements.filtered.txt"; \
+    uv pip install --system --break-system-packages --constraint /tmp/torch-constraints.txt -r "$d/requirements.filtered.txt"; \
     fi \
     done
 
