@@ -20,11 +20,10 @@ RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_D
     git clone --depth 1 https://github.com/loan-mgt/hf-lora-loader.git $COMFYUI_DIR/custom_nodes/hf-lora-loader && \
     git clone --depth 1 https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git $COMFYUI_DIR/custom_nodes/ComfyUI-RunpodDirect
 
-# The base image ships torch + torchaudio but NOT torchvision.
-# Install torchvision from the matching cu130 wheel index BEFORE anything
-# else can pull in a mismatched build from default PyPI.
-RUN uv pip install --system --break-system-packages \
-    torchvision --index-url https://download.pytorch.org/whl/cu130
+# Ensure torch, torchvision, and torchaudio are all installed and upgraded 
+# together from the same matching index to prevent ABI mismatches.
+RUN uv pip install --system --break-system-packages --upgrade \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
 
 # Now lock torch/torchvision/torchaudio to what's actually installed,
 # so no package (top-level or transitive) can override them later.
