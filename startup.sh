@@ -27,6 +27,7 @@ echo "==========================================================================
 # Parse --model "repo_id filename" arguments
 CUSTOM_MODELS=()
 HF_TOKEN_ARG=""
+EXTRA_ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
         --model)
@@ -44,7 +45,7 @@ while [[ $# -gt 0 ]]; do
             [[ -n "$HF_TOKEN_ARG" ]] || { echo "Error: --hf-token requires a token value"; exit 1; }
             shift
             ;;
-        *) shift ;;
+        *) EXTRA_ARGS+=("$1"); shift ;;
     esac
 done
 
@@ -115,4 +116,4 @@ echo "Model check complete! Starting ComfyUI..."
 echo "============================================================================"
 
 cd "$COMFYUI_DIR"
-exec "$PYTHON_BIN" main.py --listen 0.0.0.0 --port 8888
+exec "$PYTHON_BIN" main.py --listen 0.0.0.0 --port 8888 "${EXTRA_ARGS[@]}"
